@@ -116,21 +116,17 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | CRYPTOGRAPHIC FAILURE
+        | CRYPTOGRAPHIC FAILURE - SECURE
         |--------------------------------------------------------------------------
         |
-        | Questa parte è ancora volutamente vulnerabile.
-        | La sistemeremo nella relativa esercitazione.
+        | MD5 è stato sostituito con SHA-256.
         |
         */
 
-        $newImageHash = md5_file($newImage);
-
-        // SECURE:
-        // $newImageHash = hash_file(
-        //     'sha256',
-        //     $newImage
-        // );
+        $newImageHash = hash_file(
+            'sha256',
+            $newImage
+        );
 
         if ($newImageHash == $user->avatar) {
             return redirect()

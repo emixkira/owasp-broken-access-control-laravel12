@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Actions\Fortify\AuthenticateUser;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
@@ -33,14 +34,29 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
-        RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+        Fortify::authenticateUsing([
+            new AuthenticateUser,
+            '__invoke',
+        ]);
 
-            return Limit::perMinute(5)->by($throttleKey);
+        RateLimiter::for('login', function (Request $request) {
+            $throttleKey = Str::transliterate(
+                Str::lower(
+                    $request->input(
+                        Fortify::username()
+                    )
+                ) . '|' . $request->ip()
+            );
+
+            return Limit::perMinute(5)
+                ->by($throttleKey);
         });
 
         RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+            return Limit::perMinute(5)
+                ->by(
+                    $request->session()->get('login.id')
+                );
         });
 
         Fortify::loginView(function () {
@@ -56,7 +72,12 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::resetPasswordView(function ($request) {
-            return view('auth.reset-password', ['request' => $request]);
+            return view(
+                'auth.reset-password',
+                [
+                    'request' => $request
+                ]
+            );
         });
     }
 }
