@@ -131,23 +131,16 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | COMMENTS
+    | COMMENTS - SECURE
     |--------------------------------------------------------------------------
     */
 
-    // UNSECURE
     Route::post(
         '/articles/{articleId}/comments',
         [CommentController::class, 'store']
-    )->name('comments.store');
-
-    // SECURE
-    // Route::post(
-    //     '/articles/{articleId}/comments',
-    //     [CommentController::class, 'store']
-    // )
-    //     ->middleware(['block.suspicious'])
-    //     ->name('comments.store');
+    )
+        ->middleware(['block.suspicious'])
+        ->name('comments.store');
 });
 
 Route::get(
