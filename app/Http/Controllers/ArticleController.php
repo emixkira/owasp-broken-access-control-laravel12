@@ -12,13 +12,13 @@ class ArticleController extends Controller
 {
     public function index(Request $request, HtmlFilterService $htmlFilterService)
     {
-        // UNSECURE
+        // UNSECURE XSS VERSION
         $articles = Article::latest()
             ->where('published', true)
             ->take(6)
             ->get();
 
-        // SECURE
+        // SECURE XSS VERSION
         // $articles = $htmlFilterService
         //     ->filterHtmlCollectionByField($articles, 'content');
 
@@ -33,25 +33,32 @@ class ArticleController extends Controller
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | SEARCH - SQL INJECTION MITIGATION
+    |--------------------------------------------------------------------------
+    |
+    | Non utilizziamo più whereRaw() concatenando direttamente
+    | l'input dell'utente nella query SQL.
+    |
+    | Eloquent utilizza il parameter binding e tratta il valore
+    | inserito dall'utente come dato, non come codice SQL.
+    |
+    */
+
     public function search(Request $request)
     {
-        // UNSECURE
-        $articles = Article::whereRaw(
-            "title like '%{$request->search}%'"
-        )->get();
-
-        // SECURE
-        // $articles = Article::where(
-        //     'title',
-        //     'LIKE',
-        //     "%{$request->search}%"
-        // )
-        // ->orWhere(
-        //     'content',
-        //     'LIKE',
-        //     "%{$request->search}%"
-        // )
-        // ->get();
+        $articles = Article::where(
+            'title',
+            'LIKE',
+            '%' . $request->search . '%'
+        )
+        ->orWhere(
+            'content',
+            'LIKE',
+            '%' . $request->search . '%'
+        )
+        ->get();
 
         return view(
             'articles.index',
@@ -60,7 +67,7 @@ class ArticleController extends Controller
     }
 
 
-    // UNSECURE
+    // UNSECURE XSS VERSION
     public function show(
         Article $article,
         Request $request
@@ -108,7 +115,7 @@ class ArticleController extends Controller
         Request $request
         /*, HtmlFilterService $htmlFilterService */
     ) {
-        // UNSECURE
+        // UNSECURE XSS VERSION
         $articleData = $request->all();
 
         // SECURE XSS VERSION
