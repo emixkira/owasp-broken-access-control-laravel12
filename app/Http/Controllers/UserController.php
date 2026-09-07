@@ -14,10 +14,6 @@ class UserController extends Controller
     |--------------------------------------------------------------------------
     | PROFILE - SECURE
     |--------------------------------------------------------------------------
-    |
-    | Il profilo viene recuperato direttamente dall'utente autenticato.
-    | Non viene più utilizzato un ID ricevuto dalla URL.
-    |
     */
 
     public function profile()
@@ -118,9 +114,6 @@ class UserController extends Controller
         |--------------------------------------------------------------------------
         | CRYPTOGRAPHIC FAILURE - SECURE
         |--------------------------------------------------------------------------
-        |
-        | MD5 è stato sostituito con SHA-256.
-        |
         */
 
         $newImageHash = hash_file(
@@ -163,11 +156,6 @@ class UserController extends Controller
     |--------------------------------------------------------------------------
     | DOWNLOAD DOCUMENTS - SECURE
     |--------------------------------------------------------------------------
-    |
-    | Il nome del file non viene più accettato liberamente.
-    | Possono essere scaricati soltanto i documenti presenti
-    | nella whitelist.
-    |
     */
 
     public function download(Request $request)
@@ -194,6 +182,16 @@ class UserController extends Controller
         return response()->download($path);
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILE UPLOAD - SECURITY MISCONFIGURATION MITIGATION
+    |--------------------------------------------------------------------------
+    |
+    | L'upload non accetta più qualsiasi estensione.
+    | Sono permessi soltanto i tipi previsti dalla lezione.
+    |
+    */
 
     public function upload(Request $request)
     {
@@ -224,35 +222,30 @@ class UserController extends Controller
 
         $file = $request->file('file');
 
-        /*
-        |--------------------------------------------------------------------------
-        | FILE UPLOAD - UNSECURE
-        |--------------------------------------------------------------------------
-        |
-        | Questa parte rimane volutamente vulnerabile.
-        | La correggeremo nella relativa esercitazione OWASP.
-        |
-        */
+        $allowedExtensions = [
+            'jpg',
+            'jpeg',
+            'png',
+            'gif',
+            'pdf',
+        ];
 
-        $filename =
-            $file->getClientOriginalName();
+        $extension = strtolower(
+            $file->getClientOriginalExtension()
+        );
+
+        if (!in_array($extension, $allowedExtensions, true)) {
+            return back()->withErrors(
+                'File not valid'
+            );
+        }
+
+        $filename = $file->getClientOriginalName();
 
         $file->move(
             $path,
             $filename
         );
-
-        /*
-        |--------------------------------------------------------------------------
-        | SECURE VERSION - DA IMPLEMENTARE SUCCESSIVAMENTE
-        |--------------------------------------------------------------------------
-        |
-        | Controllo estensione
-        | Controllo MIME type
-        | Nome file sicuro
-        | Storage privato
-        |
-        */
 
         return back()->withMessage(
             'Upload successful'
