@@ -11,24 +11,14 @@ return [
     |--------------------------------------------------------------------------
     | Default Log Channel
     |--------------------------------------------------------------------------
-    |
-    | This option defines the default log channel that is utilized to write
-    | messages to your logs. The value provided here should match one of
-    | the channels present in the list of "channels" configured below.
-    |
     */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    'default' => env('LOG_CHANNEL', 'secure_daily'),
 
     /*
     |--------------------------------------------------------------------------
     | Deprecations Log Channel
     |--------------------------------------------------------------------------
-    |
-    | This option controls the log channel that should be used to log warnings
-    | regarding deprecated PHP and library features. This allows you to get
-    | your application ready for upcoming major versions of dependencies.
-    |
     */
 
     'deprecations' => [
@@ -40,35 +30,53 @@ return [
     |--------------------------------------------------------------------------
     | Log Channels
     |--------------------------------------------------------------------------
-    |
-    | Here you may configure the log channels for your application. Laravel
-    | utilizes the Monolog PHP logging library, which includes a variety
-    | of powerful log handlers and formatters that you're free to use.
-    |
-    | Available drivers: "single", "daily", "slack", "syslog",
-    |                    "errorlog", "monolog", "custom", "stack"
-    |
     */
 
     'channels' => [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'single')),
+            'channels' => explode(',', env('LOG_STACK', 'secure_daily')),
             'ignore_exceptions' => false,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Secure Daily Log
+        |--------------------------------------------------------------------------
+        |
+        | I log applicativi vengono salvati fuori dalla directory del progetto.
+        | La rotazione giornaliera permette inoltre di mantenere una cronologia
+        | dei log senza utilizzare un unico file permanente.
+        |
+        */
+
+        'secure_daily' => [
+            'driver' => 'daily',
+
+            'path' => env(
+                'LOG_SECURE_PATH',
+                dirname(base_path()) . '/owasp-secure-logs/laravel.log'
+            ),
+
+            'level' => env('LOG_LEVEL', 'info'),
+
+            'days' => (int) env('LOG_DAILY_DAYS', 30),
+
+            'replace_placeholders' => true,
         ],
 
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', 'info'),
             'replace_placeholders' => true,
         ],
 
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', 'info'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
         ],
@@ -84,37 +92,51 @@ return [
 
         'papertrail' => [
             'driver' => 'monolog',
-            'level' => env('LOG_LEVEL', 'debug'),
-            'handler' => env('LOG_PAPERTRAIL_HANDLER', SyslogUdpHandler::class),
+            'level' => env('LOG_LEVEL', 'info'),
+            'handler' => env(
+                'LOG_PAPERTRAIL_HANDLER',
+                SyslogUdpHandler::class
+            ),
             'handler_with' => [
                 'host' => env('PAPERTRAIL_URL'),
                 'port' => env('PAPERTRAIL_PORT'),
-                'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
+                'connectionString' =>
+                    'tls://' .
+                    env('PAPERTRAIL_URL') .
+                    ':' .
+                    env('PAPERTRAIL_PORT'),
             ],
-            'processors' => [PsrLogMessageProcessor::class],
+            'processors' => [
+                PsrLogMessageProcessor::class,
+            ],
         ],
 
         'stderr' => [
             'driver' => 'monolog',
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', 'info'),
             'handler' => StreamHandler::class,
             'handler_with' => [
                 'stream' => 'php://stderr',
             ],
             'formatter' => env('LOG_STDERR_FORMATTER'),
-            'processors' => [PsrLogMessageProcessor::class],
+            'processors' => [
+                PsrLogMessageProcessor::class,
+            ],
         ],
 
         'syslog' => [
             'driver' => 'syslog',
-            'level' => env('LOG_LEVEL', 'debug'),
-            'facility' => env('LOG_SYSLOG_FACILITY', LOG_USER),
+            'level' => env('LOG_LEVEL', 'info'),
+            'facility' => env(
+                'LOG_SYSLOG_FACILITY',
+                LOG_USER
+            ),
             'replace_placeholders' => true,
         ],
 
         'errorlog' => [
             'driver' => 'errorlog',
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', 'info'),
             'replace_placeholders' => true,
         ],
 
@@ -124,7 +146,10 @@ return [
         ],
 
         'emergency' => [
-            'path' => storage_path('logs/laravel.log'),
+            'path' => env(
+                'LOG_SECURE_PATH',
+                dirname(base_path()) . '/owasp-secure-logs/laravel.log'
+            ),
         ],
 
     ],
